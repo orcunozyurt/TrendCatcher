@@ -52,31 +52,76 @@ func main() {
 	demux.Tweet = func(tweet *twitter.Tweet) {
 
 		timenow := time.Now()
-		truncated := timenow.Truncate(time.Minute)
-		query := database.Query{}
-		query["tweeted_at"] = truncated
+		truncatedMinute := timenow.Truncate(time.Minute)
+		truncatedHour := timenow.Truncate(time.Hour)
+		truncatedDay := time.Date(timenow.Year(), timenow.Month(), timenow.Day(), 0, 0, 0, 0, timenow.Location())
 
-		item, _ := models.GetExpression(query)
-		if item != nil {
-			count := item.PostCount
+		querymin := database.Query{}
+		querymin["tweeted_at"] = truncatedMinute
+
+		queryhour := database.Query{}
+		queryhour["tweeted_at"] = truncatedHour
+
+		queryday := database.Query{}
+		queryday["tweeted_at"] = truncatedDay
+
+		itemMinute, _ := models.GetExpression(querymin, 0)
+		itemHour, _ := models.GetExpression(queryhour, 1)
+		itemDay, _ := models.GetExpression(queryday, 2)
+		if itemMinute != nil {
+			count := itemMinute.PostCount
 			add := *count + 1
-			item.PostCount = &add
-			item.Update()
-			fmt.Println("UPDATED")
+			itemMinute.PostCount = &add
+			itemMinute.Update(0)
+			fmt.Println("UPDATED", "PERMINUTE")
 
 		} else {
 
 			expression := &models.Expression{}
 			count := 1
 			expression.PostCount = &count
-			expression.Create()
-			fmt.Println("CREATED")
+			expression.Create(0)
+			fmt.Println("CREATED", "PERMINUTE")
+
+		}
+
+		if itemHour != nil {
+			count := itemHour.PostCount
+			add := *count + 1
+			itemHour.PostCount = &add
+			itemHour.Update(1)
+			fmt.Println("UPDATED", "HOURLY")
+
+		} else {
+
+			expression := &models.Expression{}
+			count := 1
+			expression.PostCount = &count
+			expression.Create(1)
+			fmt.Println("CREATED", "HOURLY")
+
+		}
+
+		if itemDay != nil {
+			count := itemDay.PostCount
+			add := *count + 1
+			itemDay.PostCount = &add
+			itemDay.Update(2)
+			fmt.Println("UPDATED", "DAILY")
+
+		} else {
+
+			expression := &models.Expression{}
+			count := 1
+			expression.PostCount = &count
+			expression.Create(2)
+			fmt.Println("CREATED", "DAILY")
 
 		}
 
 	}
 	params := &twitter.StreamFilterParams{
-		Track:         []string{"kitten"},
+		Track:         []string{"bitcoin"},
 		StallWarnings: twitter.Bool(true),
 	}
 	stream, err := client.Streams.Filter(params)
