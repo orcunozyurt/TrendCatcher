@@ -8,18 +8,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/TrendCatcher/database"
+	"github.com/TrendCatcher/models"
+	"github.com/TrendCatcher/utils"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/joho/godotenv"
-	"github.com/trendcatcher/database"
-	"github.com/trendcatcher/models"
-	"github.com/trendcatcher/utils"
 	"github.com/tuvistavie/structomap"
 )
 
 func init() {
 	database.Connect()
-	database.EnsureIndexes()
+
 	// Use snake case in all serializers
 	structomap.SetDefaultCase(structomap.SnakeCase)
 	err := godotenv.Load()

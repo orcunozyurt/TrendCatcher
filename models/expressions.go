@@ -3,8 +3,8 @@ package models
 import (
 	"time"
 
+	"github.com/TrendCatcher/database"
 	"github.com/rs/xid"
-	"github.com/trendcatcher/database"
 	"github.com/tuvistavie/structomap"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -40,7 +40,7 @@ type Expressions []Expression
 // ListExpressions lists all expressions
 func ListExpressions(query database.Query, paginationParams *database.PaginationParams) (*Expressions, error) {
 	var result Expressions
-	var dbtouse string
+	dbtouse := DBTableTweetsPerMin
 
 	if paginationParams == nil {
 		paginationParams = database.NewPaginationParams()
@@ -197,10 +197,10 @@ type ExpressionSerializer struct {
 // NewExpressionSerializer creates a new ExpressionSerializer
 func NewExpressionSerializer() *ExpressionSerializer {
 	s := &ExpressionSerializer{structomap.New()}
-	s.Pick("Postcount").
+	s.Pick("PostCount").
 		PickFunc(func(t interface{}) interface{} {
 			return t.(time.Time).Format(time.RFC3339)
-		}, "TweetedAt", "UpdatedAt").
+		}, "TweetedAt", "CreatedAt").
 		AddFunc("ID", func(expression interface{}) interface{} {
 			return expression.(Expression).URLToken
 		})

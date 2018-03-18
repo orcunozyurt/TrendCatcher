@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/trendcatcher/utils"
+	"github.com/TrendCatcher/utils"
 	"gopkg.in/mgo.v2"
 )
 
@@ -28,12 +28,6 @@ type PaginationParams struct {
 	Page   int
 }
 
-// GeoJSON should used to parse location data
-type GeoJSON struct {
-	Type        string    `json:"-"`
-	Coordinates []float64 `json:"coordinates"`
-}
-
 // MongoConn holds session information of MongoDB connection
 type MongoConn struct {
 	Session  *mgo.Session
@@ -51,14 +45,6 @@ var (
 	Mongo *MongoConn
 )
 
-// GeoJSONFromCoords returns a GeoJSON with given coordinates
-func GeoJSONFromCoords(latitude, longitude float64) GeoJSON {
-	return GeoJSON{
-		Type:        "Point",
-		Coordinates: []float64{longitude, latitude},
-	}
-}
-
 // NewPaginationParams creates and returns new PaginationParams
 func NewPaginationParams() *PaginationParams {
 	return &PaginationParams{
@@ -71,7 +57,7 @@ func NewPaginationParams() *PaginationParams {
 func PaginationParamsForContext(pageQuery, limitQuery, sortByQuery string) *PaginationParams {
 	limit, limitErr := strconv.Atoi(limitQuery)
 	if limitErr != nil {
-		limit = 7500
+		limit = 50
 	}
 
 	sortBy := "-_id"
@@ -108,31 +94,6 @@ func Connect() {
 	}
 }
 
-// EnsureIndexes ensure indexes
-func EnsureIndexes() {
-	index := mgo.Index{
-		Key:        []string{"$2dsphere:geojson"},
-		Unique:     false,
-		DropDups:   false,
-		Background: true,
-		Sparse:     true,
-	}
-	Mongo.EnsureIndex("tcexpressions", index)
-}
-
-// // CloneSession provides echo MiddlewareFunc that clones session for each request
-// func CloneSession() echo.MiddlewareFunc {
-// 	return func(h echo.HandlerFunc) echo.HandlerFunc {
-// 		return func(c echo.Context) error {
-// 			// s := Mongo.Session.Clone()
-// 			// defer s.Close()
-//
-// 			// c.Set("db", Mongo.Session.DB(Mongo.DialInfo.Database))
-// 			return nil
-// 		}
-// 	}
-// }
-
 // FindOne returns first object with matching criteria
 func (db *MongoConn) FindOne(collection string, query Query, result interface{}) error {
 	return db.Session.
@@ -167,22 +128,6 @@ func (db *MongoConn) FindLast(collection string, query Query, result interface{}
 		Find(query).
 		Sort("-_id").
 		One(result)
-}
-
-// FindAllGeo returns all documents matching with criteria
-func (db *MongoConn) FindAllGeo(collection string, query Query, result interface{}, pagination *PaginationParams) error {
-	queryResult := db.Session.
-		DB(db.DialInfo.Database).
-		C(collection).
-		Find(query)
-
-	if pagination != nil {
-		queryResult = queryResult.
-			Skip(pagination.Page * pagination.Limit).
-			Limit(pagination.Limit)
-	}
-
-	return queryResult.All(result)
 }
 
 // Count returns document count of given query
